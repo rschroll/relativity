@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Relativity of Simultaneity</title>
+<meta charset="utf-8" />
+<style type="text/css">
+body {
+    background: #eee;
+    font-family: "sans-serif";
+}
+h1 {
+    text-align: center;
+}
+#holder {
+    margin: auto;
+    width: 620px;
+    background: #fff;
+    border: 1px solid #666;
+    border-radius: 10px;
+}
+</style>
+
+<script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+window.onload = function () {
+    var r = Raphael("holder", 620, 420),
+        t = 0, v = 0, c = 40, lc = 1,
+        cx = 310, cy = 240, tw = 80, th = 40,
+        trainsty = {stroke: "#39f", "stroke-width": 6, fill: "#39f"},
+        cl = r.circle(cx - tw/2, cy, 6).attr(trainsty),
+        cr = r.circle(cx + tw/2, cy, 6).attr(trainsty),
+        bar = r.path([["M", cx-tw/2+6, cy], ["L", cx+tw/2-6, cy]]).attr(trainsty),
+        /*tl = r.text(cx - tw/2, cy + 18, "0.00").attr(
+            {fill: "#39f", "font-size": 15, "font-weight": "bold"});
+        tr = r.text(cx + tw/2, cy + 18, "0.00").attr(
+            {fill: "#39f", "font-size": 15, "font-weight": "bold"});*/
+        train = r.set(cl, cr, bar/*, tl ,tr*/),
+        shell = r.circle(cx, cy, 1).attr(
+            {stroke: "#db0", "stroke-width": 3});
+    
+    function update() {
+        var scale = Math.sqrt(1 - v*v*lc);
+        train.transform([["t", t*v*c, 0], ["s", scale, 1, cx, cy]]);
+        shell.attr({r: t*c+1});
+        cl.attr({fill: -t < v*t - scale ? "#f33" : "#39f"});
+        cr.attr({fill: t > v*t + scale ? "#0f0" : "#39f"});
+        /*tl.attr({text: (t*scale + v).toFixed(2)});
+        tr.attr({text: (t*scale - v).toFixed(2)});*/
+    }
+        
+    function slider(px, py, w, vmin, vmax, vstart, callback) {
+        var hw = 10,
+            hh = 20,
+            scale = w / (vmax-vmin),
+            bar = r.path([["M", px+hw/2, py], ["L", px+hw/2+w, py]]).attr(
+                {stroke: "#666", "stroke-dasharray": ", "}),
+            handle = r.rect(px + scale * (vstart - vmin), py - hh/2, hw, hh, hw/4).attr(
+                {fill: "#ccc", stroke: "#666"}),
+            label = r.text(px + w + 2*hw, py, vstart.toFixed(2)).attr(
+                {"font-size": 0.75*hh, "text-anchor": "start"});
+        
+        function move(dx, dy, x, y) {
+            var xn = this.xi + dx;
+            if (xn < px) xn = px;
+            if (xn > px + w) xn = px + w;
+            this.attr({x: xn});
+            var value = (xn - px) / scale + vmin;
+            label.attr({text: value.toFixed(2)});
+            callback(value);
+        }
+        function start(x, y) {
+            this.xi = this.attr("x");
+        }
+        handle.drag(move, start);
+    }
+    
+    r.rect(0, 0, 620, 75, 10).attr(
+        {fill: "white", stroke: "none", opacity: "0.75"});
+    r.text(20, 20, "t").attr({"font-size": 15});
+    slider(40, 20, 300, 0, 5, t, function (val) {t = val; update();});
+    r.text(20, 50, "v/c").attr({"font-size": 15});
+    slider(40, 50, 300, -0.99, 0.99, v, function (val) {v = val; update();});
+    
+    r.text(500, 35, "Length contraction enabled").attr(
+        {"font-size": 15, "font-weight": "bold", fill: "#060"}).click(
+        function () {
+            lc = 1 - lc;
+            this.attr({text: "Length contraction " + (lc ? "enabled" : "disabled"),
+                       fill: lc ? "#060" : "#600"});
+            update();
+        });
+    
+};
+</script>
+</head>
+
+<body>
+<h1>Relativity of Simultaneity</h1>
+<div id="holder"></div>
+</body>
+</html>
