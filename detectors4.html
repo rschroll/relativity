@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Exactly.  One louder.</title>
+<meta charset="utf-8" />
+<style type="text/css">
+body {
+    background: #eee;
+    font-family: "sans-serif";
+}
+body > * {
+    width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+#holder {
+    background: #fff;
+    border: 1px solid #666;
+    border-radius: 10px;
+}
+form {
+    display: inline-block;
+    margin-top: 1em;
+}
+#timeslide {
+    display: inline-block;
+    width: 20em;
+    margin: 0 0.5em;
+}
+td + td + td {
+    padding-left: 1em;
+}
+.fillin {
+    background: #fff;
+    width: 3em;
+    padding-left: 0em;
+    text-align: center;
+    border-radius: 0.2em;
+}
+</style>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/themes/base/jquery-ui.css" type="text/css" media="all" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function () {
+    Raphael.el.is_visible = function() {
+        return (this.node.style.display !== "none");
+    }
+    function ssqrt(x) {
+        if (x > 0)
+            return Math.sqrt(x);
+        return 0;
+    }
+    
+    var sw = 620, sh = 420, ss=50,
+        ex, ey, et,
+        r = Raphael("holder", sw, sh);
+
+    function clock(x, y, v, hue, label) {
+        this.x = x;
+        this.y = y;
+        this.v = v;
+        this.label = label;
+        
+        var markattr = {fill: Raphael.hsl(hue,1,0.75), "stroke-width": 0};
+        this.mark1 = r.circle(x, -y, 0.08).attr(markattr);
+        this.mark2 = r.circle(x, -y-1, 0.08).attr(markattr);
+        this.mark3 = r.circle(x+1, -y-1, 0.08).attr(markattr);
+        this.mark4 = r.circle(x+1, -y, 0.08).attr(markattr);
+        var shellattr = {};
+        this.shell1 = r.circle(x, -y, 0).attr(shellattr);
+        this.shell2 = r.circle(x, -y-1, 0).attr(shellattr);;
+        this.shell3 = r.circle(x+1, -y-1, 0).attr(shellattr);
+        this.shell4 = r.circle(x+1, -y, 0).attr(shellattr);
+        var textattr = {"text-anchor": "end", "font-size": 10, fill: Raphael.hsl(hue,1,0.5)};
+        this.text1 = r.text((x-0.1)*ss, -y*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        this.text2 = r.text((x-0.1)*ss, (-y-1)*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        this.text3 = r.text((x-0.1+1)*ss, -y*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        this.text4 = r.text((x-0.1+1)*ss, (-y-1)*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        var eshellattr = {stroke: Raphael.hsl(hue,1,0.5), "stroke-width": 3};
+        this.eshell1 = r.circle(0, -y, 3).attr(eshellattr);
+        this.eshell2 = r.circle(0, -y-1, 3).attr(eshellattr);
+        this.eshell3 = r.circle(0, -y-1, 3).attr(eshellattr);
+        this.eshell4 = r.circle(0, -y, 3).attr(eshellattr);
+        this.elements = [this.shell1, this.shell2, this.shell3, this.shell4,
+                         this.mark1, this.mark2, this.mark3, this.mark4,
+                         this.text1, this.text2, this.text3, this.text4,
+                         this.eshell1, this.eshell2, this.eshell3, this.eshell4];
+        
+        this.draw = function (t) {
+            var gamma = 1/Math.sqrt(1 - this.v*this.v),
+                t1 = t/gamma,
+                t3 = t1 - this.v,
+                x1 = this.x + this.v*t;
+            this.mark1.attr({cx: x1});
+            this.mark2.attr({cx: x1});
+            this.mark3.attr({cx: x1+1/gamma});
+            this.mark4.attr({cx: x1+1/gamma});
+            var t1e = 2*Math.floor(t1/2);
+                t2e = 2*Math.floor((t1-1)/2) + 1;
+                t3e = 2*Math.floor(t3/2);
+                t4e = 2*Math.floor((t3-1)/2) + 1;
+            this.shell1.attr({cx: this.x + this.v*t1e*gamma,
+                r: (t1-t1e)*gamma, opacity: 1 - (t1-t1e)/2});
+            this.shell2.attr({cx: this.x + this.v*t2e*gamma,
+                r: (t1-t2e)*gamma, opacity: 1 - (t1-t2e)/2});
+            this.shell3.attr({cx: this.x + 1/gamma + this.v*(t3e+this.v)*gamma,
+                r: (t3-t3e)*gamma, opacity: 1-(t3-t3e)/2});
+            this.shell4.attr({cx: this.x + 1/gamma + this.v*(t4e+this.v)*gamma,
+                r: (t3-t4e)*gamma, opacity: 1-(t3-t4e)/2});
+            this.text1.attr({x: (x1-0.1)*ss, text: t1.toFixed(2)});
+            this.text2.attr({x: (x1-0.1)*ss, text: t1.toFixed(2)});
+            this.text3.attr({x: (x1+1/gamma-0.1)*ss, text: t3.toFixed(2)});
+            this.text4.attr({x: (x1+1/gamma-0.1)*ss, text: t3.toFixed(2)});
+            this.eshell1.attr({r: this.t1 - t});
+            this.eshell2.attr({r: this.t2 - t});
+            this.eshell3.attr({r: this.t3 - t});
+            this.eshell4.attr({r: this.t4 - t});
+            if (t >= this.t1) {
+                this.eshell1.show();
+                $("#t1"+this.label).text((this.t1/gamma).toFixed(2));
+            }
+            if (t >= this.t2) {
+                this.eshell2.show();
+                $("#t2"+this.label).text((this.t2/gamma).toFixed(2));
+            }
+            if (t >= this.t3) {
+                this.eshell3.show();
+                $("#t3"+this.label).text((this.t3/gamma - this.v).toFixed(2));
+            }
+            if (t >= this.t4) {
+                this.eshell4.show();
+                $("#t4"+this.label).text((this.t4/gamma - this.v).toFixed(2));
+            }
+        };
+        
+        this.setup = function (ex, ey ,et) {
+            var gamma = 1/Math.sqrt(1 - this.v*this.v);
+            this.t1 = (et + this.v*(this.x-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y - ey, 2))) / (1 - this.v*this.v);
+            this.eshell1.attr({cx: this.x + this.v*this.t1});
+            this.eshell1.hide();
+            this.t2 = (et + this.v*(this.x-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y+1 - ey, 2))) / (1 - this.v*this.v);
+            this.eshell2.attr({cx: this.x + this.v*this.t2});
+            this.eshell2.hide();
+            this.t3 = (et + this.v*(this.x+1/gamma-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x+1/gamma - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y+1 - ey, 2))) / (1 - this.v*this.v);
+            this.eshell3.attr({cx: this.x + 1/gamma + this.v*this.t3});
+            this.eshell3.hide();
+            this.t4 = (et + this.v*(this.x+1/gamma-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x+1/gamma - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y - ey, 2))) / (1 - this.v*this.v);
+            this.eshell4.attr({cx: this.x + 1/gamma + this.v*this.t4});
+            this.eshell4.hide();
+            this.need_calc = true;
+            for (var i=0; i<6; i++)
+                $("#" + ['t1', 't2', 't3', 'x', 'y', 't'][i] + this.label).text("");
+        }
+    }
+    
+    var clock1 = new clock(0, 0, 0, 0, "A");
+    //var clock2 = new clock(0, 3, 0.5, 0.67, "B");
+    var shell = r.circle(0, 0, 1).attr({stroke: "#db0", "stroke-width": 3});
+    var scene = r.set(clock1.elements.concat([shell]));
+    scene.transform([["..."], ["s", ss, ss, 0, 0], ["T", sw/2, 3*sh/4]]);
+    
+    function update() {
+        var t = $("#timeslide").slider("value");
+        clock1.draw(t);
+        //clock2.draw(t);
+        shell.attr({r: t - et});
+        $("#timedisplay").text(t.toFixed(1));
+    }
+    
+    function reset() {
+        var ex = parseFloat($("#ex").val()),
+            ey = parseFloat($("#ey").val()),
+            v = parseFloat($("#v").val());
+        et = parseFloat($("#et").val());
+        shell.attr({cx: ex, cy: -ey});
+        //v = Math.min(Math.max(v, -0.99), 0.99);
+        //clock2.v = v;
+        //$("#v").val(v);
+        clock1.setup(ex, ey, et);
+        //clock2.setup(ex, ey, et);
+        $("#timeslide").slider("value", 0);
+        update();
+    }
+    
+    $("#reset").click(reset);
+    $("#timeslide").slider({min: 0, max: 10, step: 0.1, slide: update});
+    window.onload = reset;
+});
+</script>
+</head>
+
+<body>
+<h1>Four Sensor Detector</h1>
+<div id="holder"></div>
+<div>
+<form>
+    t <span id="timeslide" style=""></span> <span id="timedisplay">0.0</span>
+<table>
+    <!-- tr>
+        <td colspan="10">
+        t <span id="timeslide" style=""></span> <span id="timedisplay">0.0</span>
+        </td>
+    </tr -->
+    <tr>
+        <th colspan="2">Event</th>
+        <th colspan="4" style="color: red">Detector A</th>
+        <!-- th colspan="4" style="color: blue">Detector B 
+        <span style="color: black; font-weight: normal;">v 
+        <input id="v" size="2" value="0" style="width: 2.5em" /></span></th -->
+    </tr>
+    <tr>
+        <td>x</td><td><input id="ex" size="2" value="0" /></td>
+        <td>t<sub>1</sub></td><td id="t1A" class="fillin"></td>
+        <!-- td>x</td><td id="xA" class="fillin"></td>
+        <td>t<sub>1</sub>'</td><td id="t1B" class="fillin"></td>
+        <td>x'</td><td id="xB" class="fillin"></td -->
+    </tr>
+    <tr>
+        <td>y</td><td><input id="ey" size="2" value="2" /></td>
+        <td>t<sub>2</sub></td><td id="t2A" class="fillin"></td>
+        <!-- td>y</td><td id="yA" class="fillin"></td>
+        <!-- td>t<sub>2</sub>'</td><td id="t2B" class="fillin"></td>
+        <td>y'</td><td id="yB" class="fillin"></td -->
+    </tr>
+    <tr>
+        <td>t</td><td><input id="et" size="2" value="1" /></td>
+        <td>t<sub>3</sub></td><td id="t3A" class="fillin"></td>
+        <!-- td>t</td><td id="tA" class="fillin"></td>
+        <!-- td>t<sub>3</sub>'</td><td id="t3B" class="fillin"></td>
+        <td>t'</td><td id="tB" class="fillin"></td -->
+    </tr>
+    <tr>
+        <td>&nbsp;</td><td><input type="button" id="reset" value="Apply" /></td>
+        <td>t<sub>4</sub></td><td id="t4A" class="fillin"></td>
+    </tr>
+</table>
+</form>
+</div>
+</body>
+</html>
