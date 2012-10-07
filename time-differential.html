@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>This is getting hyperbolic.</title>
+<meta charset="utf-8" />
+<style type="text/css">
+body {
+    background: #eee;
+    font-family: "sans-serif";
+}
+body > * {
+    width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+#holder {
+    background: #fff;
+    border: 1px solid #666;
+    border-radius: 10px;
+}
+form {
+    display: inline-block;
+    margin-top: 1em;
+}
+#timeslide {
+    display: inline-block;
+    width: 20em;
+    margin: 0 0.5em;
+}
+td + td + td {
+    padding-left: 1em;
+}
+.fillin {
+    background: #fff;
+    width: 3em;
+    padding-left: 0em;
+    text-align: center;
+    border-radius: 0.2em;
+}
+</style>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/themes/base/jquery-ui.css" type="text/css" media="all" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script src="raphael.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function () {
+    Raphael.el.is_visible = function() {
+        return (this.node.style.display !== "none");
+    }
+    function ssqrt(x) {
+        if (x > 0)
+            return Math.sqrt(x);
+        return 0;
+    }
+    
+    function y(x, dt) {
+        var sign = (dt > 0) ? 1 : (dt < 0) ? -1 : 0;
+        return 0.5 + dt * Math.sqrt(x*x / (1 - dt*dt) + 0.25);
+    }
+    
+    var sw = 620, sh = 420, ss=100,
+        ex, ey, et,
+        r = Raphael("holder", sw, sh);
+
+    function clock(x, y, v, hue, label) {
+        this.x = x;
+        this.y = y;
+        this.v = v;
+        this.label = label;
+        
+        var markattr = {fill: Raphael.hsl(hue,1,0.75), "stroke-width": 0};
+        this.mark1 = r.circle(x, -y, 0.08).attr(markattr);
+        this.mark2 = r.circle(x, -y-1, 0.08).attr(markattr);
+        var shellattr = {};
+        this.shell1 = r.circle(x, -y, 0).attr(shellattr);
+        this.shell2 = r.circle(x, -y-1, 0).attr(shellattr);;
+        var textattr = {"text-anchor": "end", "font-size": 10, fill: Raphael.hsl(hue,1,0.5)};
+        this.text1 = r.text((x-0.1)*ss, -y*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        this.text2 = r.text((x-0.1)*ss, (-y-1)*ss, "").attr(textattr).transform(
+            [["s", 1/ss, 1/ss]]);
+        var eshellattr = {stroke: Raphael.hsl(hue,1,0.5), "stroke-width": 3};
+        this.eshell1 = r.circle(0, -y, 3).attr(eshellattr);
+        this.eshell2 = r.circle(0, -y-1, 3).attr(eshellattr);
+        this.elements = [this.shell1, this.shell2,
+                         this.mark1, this.mark2,
+                         this.text1, this.text2,
+                         this.eshell1, this.eshell2];
+        
+        this.draw = function (t) {
+            var gamma = 1/Math.sqrt(1 - this.v*this.v),
+                t1 = t/gamma,
+                t3 = t1 - this.v,
+                x1 = this.x + this.v*t;
+            this.mark1.attr({cx: x1});
+            this.mark2.attr({cx: x1});
+            var t1e = 2*Math.floor(t1/2);
+                t2e = 2*Math.floor((t1-1)/2) + 1;
+            this.shell1.attr({cx: this.x + this.v*t1e*gamma,
+                r: (t1-t1e)*gamma, opacity: 1 - (t1-t1e)/2});
+            this.shell2.attr({cx: this.x + this.v*t2e*gamma,
+                r: (t1-t2e)*gamma, opacity: 1 - (t1-t2e)/2});
+            this.text1.attr({x: (x1-0.1)*ss, text: t1.toFixed(2)});
+            this.text2.attr({x: (x1-0.1)*ss, text: t1.toFixed(2)});
+            this.eshell1.attr({r: this.t1 - t});
+            this.eshell2.attr({r: this.t2 - t});
+        };
+        
+        this.setup = function (ex, ey ,et) {
+            var gamma = 1/Math.sqrt(1 - this.v*this.v);
+            this.t1 = (et + this.v*(this.x-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y - ey, 2))) / (1 - this.v*this.v);
+            this.eshell1.attr({cx: this.x + this.v*this.t1});
+            this.t2 = (et + this.v*(this.x-ex) + Math.sqrt(
+                Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
+                Math.pow(this.y+1 - ey, 2))) / (1 - this.v*this.v);
+            this.eshell2.attr({cx: this.x + this.v*this.t2});
+        };
+    }
+    
+    var clock1 = new clock(0, 0, 0, 0, "A");
+    var intersection = r.path("M-10,0L10,0");
+    var scene = r.set(clock1.elements.concat([intersection]));
+    scene.transform([["..."], ["s", ss, ss, 0, 0], ["T", sw/2, 3*sh/4]]);
+    
+    function update() {
+        var t = $("#timeslide").slider("value");
+        clock1.draw(t);
+        $("#timedisplay").text(t.toFixed(2));
+    }
+    
+    function reset() {
+        var dt = parseFloat($("#dt").val());
+        dt = Math.min(Math.max(dt, -0.99), 0.99);
+        $("#dt").val(dt);
+        var ex = 0,
+            ey = y(0, dt);
+        et = -ey;
+        clock1.setup(ex, ey, et);
+        var path = "M-5," + y(-5, dt);
+        for (var x=-5+0.05; x<=5; x+=0.05) {
+            path += "L" + x + "," + (-y(x, dt));
+        }
+        intersection.attr({path: path});
+        $("#timeslide").slider("value", 0);
+        update();
+    }
+    
+    $("#reset").click(reset);
+    $("#timeslide").slider({min: -5, max: 1, step: 0.02, slide: update});
+    window.onload = reset;
+});
+</script>
+</head>
+
+<body>
+<h1>Two Sensor Detector</h1>
+<div id="holder"></div>
+<div>
+<form>
+    t <span id="timeslide" style=""></span> <span id="timedisplay">0.0</span><br />
+    &Delta;t <input id="dt" size="2" value="0.1" />
+<input type="button" id="reset" value="Apply" /></td>
+</form>
+</div>
+</body>
+</html>
