@@ -52,7 +52,7 @@ window.onload = function () {
     var shells = new Array();
     var scene = r.set(ship1, ship2, dot1, dot2);
     for (var i=0; i<10; i++) {
-        shells[i] = new shell(10, 0, i);
+        shells[i] = new shell(10, 0, -8+i);
         scene.push(shells[i].sh);
     }
     scene.transform([["..."], ["s", ss, ss, 0, 0], ["T", sw/3, sh/2]]);
