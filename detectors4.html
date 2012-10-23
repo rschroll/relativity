@@ -174,8 +174,12 @@ $(document).ready(function () {
     var scene = r.set(clock1.elements.concat([shell]));
     scene.transform([["..."], ["s", ss, ss, 0, 0], ["T", sw/2, 3*sh/4]]);
     
-    function update() {
-        var t = $("#timeslide").slider("value");
+    function update(event, ui) {
+        var t;
+        if (ui == null)
+            t = $("#timeslide").slider("value");
+        else
+            t = ui.value;
         clock1.draw(t);
         //clock2.draw(t);
         shell.attr({r: t - et});
