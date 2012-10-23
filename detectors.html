@@ -23,10 +23,36 @@ form {
     display: inline-block;
     margin-top: 1em;
 }
+#timecoord {
+    display: inline-block;
+    width: 1em;
+    text-align: left;
+}
 #timeslide {
     display: inline-block;
     width: 20em;
     margin: 0 0.5em;
+}
+#detA, #detB {
+    padding: 0 0.2em;
+    border-radius: 0.2em;
+    cursor: pointer;
+}
+.selected {
+    cursor: default !important;
+    color: white !important;
+}
+#detA {
+    color: red;
+}
+#detA.selected {
+    background: red;
+}
+#detB {
+    color: blue;
+}
+#detB.selected {
+    background: blue;
 }
 td + td + td {
     padding-left: 1em;
@@ -144,26 +170,28 @@ $(document).ready(function () {
             }
         };
         
-        this.setup = function (ex, ey ,et) {
+        this.setup = function (ex, ey, et, full) {
             var gamma = 1/Math.sqrt(1 - this.v*this.v);
             this.t1 = (et + this.v*(this.x-ex) + Math.sqrt(
                 Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
                 Math.pow(this.y - ey, 2))) / (1 - this.v*this.v);
             this.eshell1.attr({cx: this.x + this.v*this.t1});
-            this.eshell1.hide();
             this.t2 = (et + this.v*(this.x-ex) + Math.sqrt(
                 Math.pow(this.v*et + this.x - ex, 2) + (1 - this.v*this.v) * 
                 Math.pow(this.y+1 - ey, 2))) / (1 - this.v*this.v);
             this.eshell2.attr({cx: this.x + this.v*this.t2});
-            this.eshell2.hide();
             this.t3 = (et + this.v*(this.x+1/gamma-ex) + Math.sqrt(
                 Math.pow(this.v*et + this.x+1/gamma - ex, 2) + (1 - this.v*this.v) * 
                 Math.pow(this.y - ey, 2))) / (1 - this.v*this.v);
             this.eshell3.attr({cx: this.x + 1/gamma + this.v*this.t3});
-            this.eshell3.hide();
-            this.need_calc = true;
-            for (var i=0; i<6; i++)
-                $("#" + ['t1', 't2', 't3', 'x', 'y', 't'][i] + this.label).text("");
+            if (full) {
+                this.eshell1.hide();
+                this.eshell2.hide();
+                this.eshell3.hide();
+                this.need_calc = true;
+                for (var i=0; i<6; i++)
+                    $("#" + ['t1', 't2', 't3', 'x', 'y', 't'][i] + this.label).text("");
+            }
         }
     }
     
@@ -186,6 +214,7 @@ $(document).ready(function () {
     }
     
     function reset() {
+        swap(0);
         var ex = parseFloat($("#ex").val()),
             ey = parseFloat($("#ey").val()),
             v = parseFloat($("#v").val());
@@ -194,13 +223,52 @@ $(document).ready(function () {
         v = Math.min(Math.max(v, -0.99), 0.99);
         clock2.v = v;
         $("#v").val(v);
-        clock1.setup(ex, ey, et);
-        clock2.setup(ex, ey, et);
+        clock1.setup(ex, ey, et, true);
+        clock2.setup(ex, ey, et, true);
         $("#timeslide").slider("value", 0);
         update();
     }
     
+    var currdet = 0;
+    function swap(which) {
+        var v;
+        if (which == currdet)
+            return;
+        currdet = which;
+        if (which) {
+            v = clock2.v;
+            clock1.v = -v;
+            clock2.v = 0;
+            $("#timecoord").text("t'");
+            $("#detA").removeClass("selected")
+            $("#detB").addClass("selected")
+        } else {
+            v = clock1.v;
+            clock2.v = -v;
+            clock1.v = 0;
+            $("#timecoord").text("t");
+            $("#detA").addClass("selected")
+            $("#detB").removeClass("selected")
+        }
+        var x = shell.attr('cx'),
+            y = -shell.attr('cy'),
+            gamma = 1/Math.sqrt(1 - v*v);
+            ex = gamma*(x - v*et);
+        et = gamma*(et - v*x);
+        clock1.setup(ex, y, et, false);
+        clock2.setup(ex, y, et, false);
+        shell.attr({cx: ex});
+        var t = $("#timeslide").slider("value"),
+            tmin = Math.min(Math.floor(et), 0);
+        $("#timeslide").slider({min: tmin, value: t/gamma});
+        update();
+    }
+    function swapA() {swap(0);}
+    function swapB() {swap(1);}
+    
     $("#reset").click(reset);
+    $("#detA").click(swapA);
+    $("#detB").click(swapB);
     $("#timeslide").slider({min: 0, max: 10, step: 0.1, slide: update});
     window.onload = reset;
 });
@@ -215,14 +283,15 @@ $(document).ready(function () {
 <table>
     <tr>
         <td colspan="10">
-        t <span id="timeslide" style=""></span> <span id="timedisplay">0.0</span>
+        <span id="timecoord">t</span> <span id="timeslide" style=""></span>
+        <span id="timedisplay">0.0</span>
         </td>
     </tr>
     <tr>
         <th colspan="2">Event</th>
-        <th colspan="4" style="color: red">Detector A</th>
-        <th colspan="4" style="color: blue">Detector B 
-        <span style="color: black; font-weight: normal;">v 
+        <th colspan="4"><span id="detA" class="selected">Detector A</span></th>
+        <th colspan="4"><span id="detB">Detector B</span> 
+        <span style="font-weight: normal;">v 
         <input id="v" size="2" value="0" style="width: 2.5em" /></span></th>
     </tr>
     <tr>
