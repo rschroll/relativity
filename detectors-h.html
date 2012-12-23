@@ -138,12 +138,20 @@ $(document).ready(function () {
                          - 4*t1*t1)/4,
                     tp = (b + ssqrt(b*b - 4*a*c))/(2*a),
                     tm = (b - ssqrt(b*b - 4*a*c))/(2*a),
-                    t = Math.min(tp, tm),  // why?
+                    t = Math.min(tp, tm),
                     x = t*(t3-t1) - (t3*t3 - t1*t1 - 1)/2,
-                    y = t*(t2-t1) - (t2*t2 - t1*t1 - 1)/2;
+                    y = t*(t2-t1) - (t2*t2 - t1*t1 - 1)/2,
+                    tt = Math.max(tp, tm),
+                    xx = tt*(t3-t1) - (t3*t3 - t1*t1 - 1)/2,
+                    yy = tt*(t2-t1) - (t2*t2 - t1*t1 - 1)/2;
                 $("#x"+this.label).text(x.toFixed(2));
                 $("#y"+this.label).text(y.toFixed(2));
                 $("#t"+this.label).text(t.toFixed(2));
+                if (tt < Math.min(t1, t2, t3) && tt > t + 0.0001) {
+                    $("#xx"+this.label).text(xx.toFixed(2));
+                    $("#yy"+this.label).text(yy.toFixed(2));
+                    $("#tt"+this.label).text(tt.toFixed(2));
+                }
                 this.need_calc = false;
             }
         };
@@ -166,8 +174,8 @@ $(document).ready(function () {
             this.eshell3.attr({cx: this.x + 1/gamma + this.v*this.t3});
             this.eshell3.hide();
             this.need_calc = true;
-            for (var i=0; i<6; i++)
-                $("#" + ['t1', 't2', 't3', 'x', 'y', 't'][i] + this.label).text("");
+            for (var i=0; i<9; i++)
+                $("#" + ['t1', 't2', 't3', 'x', 'y', 't', 'xx', 'yy', 'tt'][i] + this.label).text("");
         }
     }
     
@@ -242,42 +250,43 @@ $(document).ready(function () {
 <form>
 <table>
     <tr>
-        <td colspan="10">
+        <td colspan="12">
         t <span id="timeslide" style=""></span> <span id="timedisplay">0.0</span>
         </td>
     </tr>
     <tr>
         <th colspan="2">Event</th>
-        <th colspan="4" style="color: red">Observer A</th>
-        <th colspan="4" style="color: blue">Observer B 
+        <th colspan="5" style="color: red">Observer A</th>
+        <th colspan="5" style="color: blue">Observer B 
         <span style="color: black; font-weight: normal;">v 
         <input id="v" size="2" value="0" style="width: 2.5em" /></span></th>
     </tr>
     <tr>
         <td>x</td><td><input id="ex" size="2" value="0" /></td>
         <td>t<sub>1</sub></td><td id="t1A" class="fillin"></td>
-        <td>x</td><td id="xA" class="fillin"></td>
+        <td>x</td><td id="xA" class="fillin"></td><td id="xxA" class="fillin"></td>
         <td>t<sub>1</sub>'</td><td id="t1B" class="fillin"></td>
-        <td>x'</td><td id="xB" class="fillin"></td>
+        <td>x'</td><td id="xB" class="fillin"></td><td id="xxB" class="fillin"></td>
     </tr>
     <tr>
         <td>y</td><td><input id="ey" size="2" value="2" /></td>
         <td>t<sub>2</sub></td><td id="t2A" class="fillin"></td>
-        <td>y</td><td id="yA" class="fillin"></td>
+        <td>y</td><td id="yA" class="fillin"></td><td id="yyA" class="fillin"></td>
         <td>t<sub>2</sub>'</td><td id="t2B" class="fillin"></td>
-        <td>y'</td><td id="yB" class="fillin"></td>
+        <td>y'</td><td id="yB" class="fillin"></td><td id="yyB" class="fillin"></td>
     </tr>
     <tr>
         <td>t</td><td><input id="et" size="2" value="1" /></td>
         <td>t<sub>3</sub></td><td id="t3A" class="fillin"></td>
-        <td>t</td><td id="tA" class="fillin"></td>
+        <td>t</td><td id="tA" class="fillin"></td><td id="ttA" class="fillin"></td>
         <td>t<sub>3</sub>'</td><td id="t3B" class="fillin"></td>
-        <td>t'</td><td id="tB" class="fillin"></td>
+        <td>t'</td><td id="tB" class="fillin"></td><td id="ttB" class="fillin"></td>
     </tr>
 </table>
 <input type="button" id="reset" value="Apply" />
 </form>
 </div>
+<div>Some events can only be located to one of two locations.</div>
 <div id="license">Released under the <a href="LICENSE.txt">BSD license</a>.</div>
 </body>
 </html>
